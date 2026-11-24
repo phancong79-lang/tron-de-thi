@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Trộn đề thi</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="./style.css" />
+
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [["$", "$"], ["\\(", "\\)"]],
+        displayMath: [["$$", "$$"], ["\\[", "\\]"]],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: [
+          "script",
+          "noscript",
+          "style",
+          "textarea",
+          "pre",
+          "code"
+        ]
+      }
+    };
+  </script>
+
+  <script
+    defer
+    src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.min.js"></script>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+
+<body class="bg-slate-100 text-slate-900">
+  <header class="bg-blue-700 text-white shadow-lg">
+    <div class="max-w-6xl mx-auto px-4 py-5">
+      <h1 class="text-2xl sm:text-3xl font-bold">
+        Trộn đề thi
+      </h1>
+
+      <p class="mt-1 text-blue-100">
+        Dành cho giáo viên — chạy hoàn toàn trên trình duyệt
+      </p>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6">
+    <!-- Thanh bước -->
+    <nav
+      class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6"
+      aria-label="Các bước"
+    >
+      <button
+        type="button"
+        class="step-tab active"
+        data-step="1"
+      >
+        1. Nhập đề gốc
+      </button>
+
+      <button
+        type="button"
+        class="step-tab"
+        data-step="2"
+      >
+        2. Cấu hình trộn
+      </button>
+
+      <button
+        type="button"
+        class="step-tab"
+        data-step="3"
+      >
+        3. Xem trước &amp; xuất
+      </button>
+    </nav>
+
+    <!-- Bước 1 -->
+    <section id="step1" class="step-panel">
+      <div class="panel">
+        <h2 class="panel-title">Bước 1: Nhập đề thi gốc</h2>
+
+        <div class="grid lg:grid-cols-2 gap-5">
+          <div>
+            <label class="field-label" for="sourceText">
+              Dán nội dung đề thi
+            </label>
+
+            <textarea
+              id="sourceText"
+              class="textarea"
+              rows="18"
+              placeholder="Ví dụ:
+
+PHẦN I
+Câu 1. Cho biểu thức $x^2+1$. Kết quả là:
+A. 1
+B. 2
+*C. 3
+D. 4
+
+PHẦN II
+Câu 1. Cho hàm số ...
+a) Ý thứ nhất
+*b) Ý thứ hai
+c) Ý thứ ba
+d) Ý thứ tư
+
+PHẦN III
+Câu 1. Tính giá trị?
+Đáp án: 12
+
+PHẦN IV
+Câu 1. Bài toán tự luận..."
+            ></textarea>
+          </div>
+
+          <div class="space-y-5">
+            <div>
+              <label class="field-label" for="docxFile">
+                Tải file đề DOCX
+              </label>
+
+              <input
+                id="docxFile"
+                type="file"
+                accept=".docx"
+                class="file-input"
+              />
+
+              <p class="hint">
+                App sẽ chuyển nội dung DOCX thành văn bản HTML.
+                Gạch chân đáp án đúng trong DOCX sẽ được nhận diện.
+              </p>
+            </div>
+
+            <div>
+              <label class="field-label" for="imageFiles">
+                Thêm hình ảnh minh họa
+              </label>
+
+              <input
+                id="imageFiles"
+                type="file"
+                accept="image/png,image/jpeg"
+                multiple
+                class="file-input"
+              />
+
+              <p class="hint">
+                Sau khi tải ảnh, nhập
+                <code>[[IMAGE:ten-file.jpg]]</code>
+                tại đúng vị trí trong câu hỏi.
+              </p>
+            </div>
+
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm">
+              <strong>Quy tắc nhận diện đáp án:</strong>
+
+              <ul class="list-disc ml-5 mt-2 space-y-1">
+                <li>
+                  Gạch chân đáp án đúng trong DOCX bằng thẻ
+                  <code>&lt;u&gt;</code>.
+                </li>
+                <li>
+                  Khi nhập văn bản, đặt
+                  <code>*</code>
+                  trước đáp án đúng:
+                  <code>*C. 3</code>.
+                </li>
+              </ul>
+
+              <strong class="block mt-3">
+                Quy tắc nhận diện phần:
+              </strong>
+
+              <p>
+                Đặt các dòng
+                <code>PHẦN I</code>,
+                <code>PHẦN II</code>,
+                <code>PHẦN III</code>,
+                <code>PHẦN IV</code>
+                trong đề.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              id="parseBtn"
+              class="primary-btn w-full"
+            >
+              Phân tích đề gốc
+            </button>
+          </div>
+        </div>
+
+        <div id="parseMessage" class="mt-4"></div>
+        <div id="draftPreview" class="mt-5"></div>
+      </div>
+    </section>
+
+    <!-- Bước 2 -->
+    <section id="step2" class="step-panel hidden">
+      <div class="panel">
+        <h2 class="panel-title">Bước 2: Cấu hình trộn</h2>
+
+        <div class="grid md:grid-cols-2 gap-5">
+          <div>
+            <label class="field-label" for="examTitle">
+              Tên đề thi
+            </label>
+
+            <input
+              id="examTitle"
+              class="text-input"
+              type="text"
+              value="ĐỀ KIỂM TRA"
+            />
+          </div>
+
+          <div>
+            <label class="field-label" for="examCount">
+              Số mã đề
+            </label>
+
+            <input
+              id="examCount"
+              class="text-input"
+              type="number"
+              min="1"
+              max="100"
+              value="4"
+            />
+
+            <p class="hint">
+              Mã đề sẽ được tạo theo thứ tự:
+              101, 102, 103...
+            </p>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4 mt-5">
+          <label class="check-card">
+            <input
+              id="shufflePart1Questions"
+              type="checkbox"
+              checked
+            />
+
+            <span>
+              <strong>Phần I — Trộn câu hỏi</strong>
+              <small>
+                Mỗi câu vẫn giữ đủ 4 phương án A, B, C, D.
+              </small>
+            </span>
+          </label>
+
+          <label class="check-card">
+            <input
+              id="shufflePart1Options"
+              type="checkbox"
+              checked
+            />
+
+            <span>
+              <strong>Phần I — Trộn phương án</strong>
+              <small>
+                Đáp án đúng được cập nhật tự động.
+              </small>
+            </span>
+          </label>
+
+          <label class="check-card">
+            <input
+              id="shufflePart2Questions"
+              type="checkbox"
+              checked
+            />
+
+            <span>
+              <strong>Phần II — Trộn câu hỏi</strong>
+              <small>
+                Thay đổi thứ tự các câu đúng/sai.
+              </small>
+            </span>
+          </label>
+
+          <label class="check-card">
+            <input
+              id="shufflePart2Statements"
+              type="checkbox"
+              checked
+            />
+
+            <span>
+              <strong>Phần II — Trộn các ý</strong>
+              <small>
+                Trộn thứ tự các ý a, b, c, d.
+              </small>
+            </span>
+          </label>
+
+          <label class="check-card">
+            <input
+              id="shufflePart3"
+              type="checkbox"
+              checked
+            />
+
+            <span>
+              <strong>Phần III — Trộn câu hỏi</strong>
+              <small>
+                Chỉ trộn thứ tự câu.
+              </small>
+            </span>
+          </label>
+
+          <label class="check-card">
+            <span>
+              <strong>Phần IV — Tự luận</strong>
+              <small>
+                Luôn giữ nguyên thứ tự.
+              </small>
+            </span>
+          </label>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-5 mt-6">
+          <div>
+            <label class="field-label" for="exportMode">
+              Chế độ xuất
+            </label>
+
+            <select id="exportMode" class="text-input">
+              <option value="student">
+                Bản cho học sinh — không hiện đáp án
+              </option>
+
+              <option value="teacher">
+                Bản cho giáo viên — hiện đáp án
+              </option>
+            </select>
+          </div>
+
+          <div>
+            <label class="field-label" for="seedMode">
+              Cách tạo hoán vị
+            </label>
+
+            <select id="seedMode" class="text-input">
+              <option value="random">
+                Ngẫu nhiên hoàn toàn
+              </option>
+
+              <option value="deterministic">
+                Định danh theo mã đề
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          id="generateBtn"
+          class="primary-btn mt-6"
+        >
+          Tạo các mã đề
+        </button>
+
+        <div id="generateMessage" class="mt-4"></div>
+      </div>
+    </section>
+
+    <!-- Bước 3 -->
+    <section id="step3" class="step-panel hidden">
+      <div class="panel">
+        <div class="flex flex-col sm:flex-row justify-between gap-3 mb-5">
+          <h2 class="panel-title mb-0">
+            Bước 3: Xem trước và xuất
+          </h2>
+
+          <div class="flex flex-wrap gap-2">
+            <button
+              type="button"
+              id="exportDocxBtn"
+              class="secondary-btn"
+            >
+              Xuất tất cả mã đề (.docx)
+            </button>
+
+            <button
+              type="button"
+              id="exportAnswersBtn"
+              class="secondary-btn"
+            >
+              Xuất đáp án (.docx)
+            </button>
+
+            <button
+              type="button"
+              id="googleSaveBtn"
+              class="secondary-btn"
+            >
+              Lưu lên Google Drive
+            </button>
+          </div>
+        </div>
+
+        <div class="grid lg:grid-cols-4 gap-5">
+          <aside class="lg:col-span-1">
+            <label class="field-label" for="codeSelector">
+              Chọn mã đề
+            </label>
+
+            <select id="codeSelector" class="text-input"></select>
+
+            <hr class="my-5" />
+
+            <label class="field-label" for="googleClientId">
+              Google OAuth Client ID
+            </label>
+
+            <input
+              id="googleClientId"
+              class="text-input"
+              type="text"
+              autocomplete="off"
+              placeholder="123456789-abc.apps.googleusercontent.com"
+            />
+
+            <p class="hint">
+              Không nhập email, mật khẩu hoặc Client Secret.
+            </p>
+
+            <hr class="my-5" />
+
+            <label class="field-label" for="aiProvider">
+              Dịch vụ AI
+            </label>
+
+            <select id="aiProvider" class="text-input">
+              <option value="gemini">Google Gemini</option>
+              <option value="groq">Groq</option>
+              <option value="meta">Meta AI</option>
+            </select>
+
+            <label class="field-label mt-4" for="apiKey">
+              API Key
+            </label>
+
+            <input
+              id="apiKey"
+              class="text-input"
+              type="password"
+              autocomplete="off"
+              placeholder="Nhập API Key"
+            />
+
+            <p class="hint">
+              Khóa API chỉ được gửi tới dịch vụ bạn chọn.
+              Không lưu khóa trong mã nguồn.
+            </p>
+
+            <button
+              type="button"
+              id="aiCheckBtn"
+              class="danger-outline-btn w-full mt-4"
+            >
+              Kiểm định đề bằng AI
+            </button>
+          </aside>
+
+          <div class="lg:col-span-3">
+            <div id="examPreview" class="exam-preview"></div>
+            <div id="aiResult" class="mt-5"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>
